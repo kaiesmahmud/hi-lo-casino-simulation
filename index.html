@@ -1,0 +1,2236 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0"
+    />
+    <title>Hi-Lo Casino</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --midnight: #070b18;
+        --navy-deep: #0c1428;
+        --navy-mid: #111d3a;
+        --navy-light: #1a2d54;
+        --gold: #d4a017;
+        --gold-light: #f0c040;
+        --gold-dim: #8a6810;
+        --gold-pale: #fde68a;
+        --silver-dim: rgba(192, 200, 216, 0.45);
+        --red-light: #ef4444;
+        --green-light: #22c55e;
+        --card-white: #f8fafc;
+        --card-red: #dc2626;
+        --card-black: #1e1b4b;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html {
+        width: 100%;
+        height: 100%;
+        background: #020408;
+      }
+      body {
+        width: 100%;
+        height: 100%;
+        background: #020408;
+        font-family: "Rajdhani", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        overflow: hidden;
+        position: fixed;
+        inset: 0;
+      }
+
+      #game-wrapper {
+        overflow-y: auto;
+        overflow-x: hidden;
+        scrollbar-width: none;
+        position: relative;
+        flex-shrink: 0;
+        background: var(--midnight);
+        -webkit-overflow-scrolling: touch;
+      }
+      #game-wrapper::-webkit-scrollbar {
+        display: none;
+      }
+
+      .screen {
+        display: none;
+        width: 100%;
+      }
+      .screen.active {
+        display: block;
+      }
+
+      /* ═══════════════ LOADING ═══════════════ */
+      #loading-screen {
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        background: radial-gradient(
+          ellipse at center,
+          var(--navy-light) 0%,
+          var(--navy-deep) 55%,
+          var(--midnight) 100%
+        );
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      #loading-screen::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 30px,
+            rgba(212, 160, 23, 0.04) 30px,
+            rgba(212, 160, 23, 0.04) 31px
+          ),
+          repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 30px,
+            rgba(212, 160, 23, 0.04) 30px,
+            rgba(212, 160, 23, 0.04) 31px
+          );
+        pointer-events: none;
+      }
+      #loading-screen::after {
+        content: "";
+        position: absolute;
+        top: -100%;
+        left: -100%;
+        width: 300%;
+        height: 300%;
+        background: linear-gradient(
+          105deg,
+          transparent 40%,
+          rgba(240, 192, 64, 0.06) 50%,
+          transparent 60%
+        );
+        animation: shine 3s ease-in-out infinite;
+        pointer-events: none;
+      }
+      @keyframes shine {
+        0% {
+          transform: translateX(-40%) translateY(-40%);
+        }
+        100% {
+          transform: translateX(0%) translateY(0%);
+        }
+      }
+      .load-title {
+        font-family: "Cinzel Decorative", cursive;
+        font-size: 2.8rem;
+        font-weight: 900;
+        color: var(--gold-light);
+        text-align: center;
+        z-index: 1;
+        animation: titlePulse 2s ease-in-out infinite alternate;
+        line-height: 1.2;
+      }
+      @keyframes titlePulse {
+        from {
+          text-shadow:
+            0 0 20px rgba(240, 192, 64, 0.4),
+            0 0 60px rgba(240, 192, 64, 0.1);
+        }
+        to {
+          text-shadow:
+            0 0 40px rgba(240, 192, 64, 0.9),
+            0 0 80px rgba(240, 192, 64, 0.3);
+        }
+      }
+      .load-tagline {
+        color: var(--silver-dim);
+        font-size: 0.82rem;
+        letter-spacing: 4px;
+        font-weight: 600;
+        z-index: 1;
+      }
+      .load-cards-row {
+        display: flex;
+        gap: 12px;
+        z-index: 1;
+      }
+      .load-big-card {
+        width: 56px;
+        height: 78px;
+        background: var(--card-white);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-weight: 900;
+        font-family: "Cinzel", serif;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+        animation: lcFloat 1.6s ease-in-out infinite alternate;
+        gap: 2px;
+      }
+      .load-big-card:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      .load-big-card:nth-child(3) {
+        animation-delay: 0.4s;
+      }
+      .load-big-card .lc-rank {
+        font-size: 1.2rem;
+        line-height: 1;
+      }
+      .load-big-card .lc-suit {
+        font-size: 1.4rem;
+        line-height: 1;
+      }
+      .load-big-card.red {
+        color: var(--card-red);
+      }
+      .load-big-card.blk {
+        color: var(--card-black);
+      }
+      @keyframes lcFloat {
+        from {
+          transform: translateY(0) rotate(-4deg);
+        }
+        to {
+          transform: translateY(-12px) rotate(4deg);
+        }
+      }
+      .load-arrows {
+        display: flex;
+        gap: 20px;
+        z-index: 1;
+      }
+      .load-arrow {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 900;
+        border: 2px solid;
+        animation: aPulse 1.4s ease-in-out infinite alternate;
+      }
+      .load-arrow.hi {
+        background: rgba(22, 163, 74, 0.2);
+        border-color: var(--green-light);
+        color: var(--green-light);
+        animation-delay: 0.3s;
+      }
+      .load-arrow.lo {
+        background: rgba(220, 38, 38, 0.2);
+        border-color: var(--red-light);
+        color: var(--red-light);
+      }
+      @keyframes aPulse {
+        from {
+          box-shadow: 0 0 0 0 rgba(240, 192, 64, 0.3);
+        }
+        to {
+          box-shadow: 0 0 0 12px rgba(240, 192, 64, 0);
+        }
+      }
+      .load-bar-wrap {
+        width: 220px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.08);
+        border-radius: 3px;
+        z-index: 1;
+        border: 1px solid rgba(212, 160, 23, 0.3);
+        overflow: hidden;
+      }
+      .load-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--gold-dim), var(--gold-light));
+        border-radius: 3px;
+        width: 0%;
+        animation: lbFill 2.6s ease-in-out forwards;
+      }
+      @keyframes lbFill {
+        to {
+          width: 100%;
+        }
+      }
+      .load-hint {
+        color: rgba(255, 255, 255, 0.25);
+        font-size: 0.72rem;
+        letter-spacing: 2px;
+        z-index: 1;
+      }
+
+      /* ═══════════════ GAME SCREEN ═══════════════ */
+      #game-screen {
+        width: 100%;
+        min-height: 100%;
+        background: radial-gradient(
+          ellipse at top,
+          var(--navy-light) 0%,
+          var(--navy-deep) 40%,
+          var(--midnight) 100%
+        );
+      }
+
+      /* HEADER */
+      .header {
+        background: rgba(0, 0, 0, 0.55);
+        border-bottom: 1px solid rgba(212, 160, 23, 0.2);
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        position: sticky;
+        top: 0;
+        z-index: 50;
+      }
+      .h-title {
+        font-family: "Cinzel Decorative", cursive;
+        font-size: 1rem;
+        color: var(--gold-light);
+        text-shadow: 0 0 10px rgba(240, 192, 64, 0.4);
+        flex: 1;
+      }
+      .h-badge {
+        background: rgba(212, 160, 23, 0.15);
+        border: 1px solid rgba(212, 160, 23, 0.4);
+        border-radius: 12px;
+        padding: 3px 10px;
+        color: var(--gold-light);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .h-bal {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--gold-dim);
+        border-radius: 16px;
+        padding: 4px 12px;
+        color: white;
+        font-size: 0.85rem;
+        font-weight: 700;
+      }
+
+      /* GAME BODY */
+      .game-body {
+        padding: 10px 14px 16px;
+      }
+
+      /* PROGRESS TRACKER */
+      .progress-track {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .prog-step {
+        flex: 1;
+        max-width: 60px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid rgba(255, 255, 255, 0.1);
+        background: rgba(0, 0, 0, 0.3);
+        font-family: "Cinzel", serif;
+        transition: all 0.3s;
+      }
+      .prog-step .ps-num {
+        font-size: 0.55rem;
+        color: rgba(255, 255, 255, 0.3);
+        font-weight: 700;
+        letter-spacing: 1px;
+      }
+      .prog-step .ps-icon {
+        font-size: 0.9rem;
+        font-weight: 900;
+        line-height: 1;
+        color: rgba(255, 255, 255, 0.2);
+      }
+      .prog-step.current {
+        border-color: var(--gold);
+        background: rgba(212, 160, 23, 0.12);
+        box-shadow: 0 0 10px rgba(212, 160, 23, 0.3);
+      }
+      .prog-step.current .ps-icon {
+        color: var(--gold-light);
+        animation: sPulse 0.8s ease-in-out infinite alternate;
+      }
+      @keyframes sPulse {
+        from {
+          opacity: 0.6;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .prog-step.win {
+        border-color: var(--green-light);
+        background: rgba(34, 197, 94, 0.12);
+      }
+      .prog-step.win .ps-icon {
+        color: var(--green-light);
+      }
+      .prog-step.loss {
+        border-color: var(--red-light);
+        background: rgba(239, 68, 68, 0.12);
+      }
+      .prog-step.loss .ps-icon {
+        color: var(--red-light);
+      }
+
+      /* ════ CARD STAGE ════ */
+      .card-stage {
+        background: rgba(0, 0, 0, 0.35);
+        border: 1px solid rgba(212, 160, 23, 0.2);
+        border-radius: 16px;
+        padding: 14px;
+        margin-bottom: 10px;
+      }
+
+      .stage-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        min-height: 30px;
+      }
+      .round-info {
+        font-family: "Cinzel", serif;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 1px;
+      }
+      .round-info span {
+        color: var(--gold-light);
+      }
+
+      /* CARD ROW */
+      .card-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .card-slot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+      .card-slot-lbl {
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+      }
+      .card-slot-lbl.prev {
+        color: rgba(255, 255, 255, 0.3);
+      }
+      .card-slot-lbl.curr {
+        color: var(--gold-light);
+      }
+      .card-slot-lbl.next {
+        color: rgba(255, 255, 255, 0.45);
+      }
+
+      .dir-arrow {
+        font-size: 1.8rem;
+        font-weight: 900;
+        line-height: 1;
+        transition: color 0.2s;
+      }
+      .dir-arrow.hi {
+        color: var(--green-light);
+        animation: daPulse 0.7s ease-in-out infinite alternate;
+      }
+      .dir-arrow.lo {
+        color: var(--red-light);
+        animation: daPulse 0.7s ease-in-out infinite alternate;
+      }
+      .dir-arrow.none {
+        color: rgba(255, 255, 255, 0.1);
+        font-size: 1.2rem;
+      }
+      @keyframes daPulse {
+        from {
+          opacity: 0.5;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* 3D card flip — CURRENT card
+         UNFLIPPED = card BACK visible (betting phase / before deal)
+         FLIPPED   = card FACE visible (after deal / during play)
+      */
+      .card-scene {
+        perspective: 800px;
+      }
+      /* Fixed pixel sizes — never shrink */
+      .card-scene.sm {
+        width: 62px;
+        height: 86px;
+        min-width: 62px;
+        min-height: 86px;
+      }
+      .card-scene.lg {
+        width: 90px;
+        height: 124px;
+        min-width: 90px;
+        min-height: 124px;
+      }
+
+      .card-inner {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      /* flipped = face side is now forward */
+      .card-inner.flipped {
+        transform: rotateY(180deg);
+      }
+
+      .card-face,
+      .card-back-el {
+        position: absolute;
+        inset: 0;
+        border-radius: 10px;
+        backface-visibility: hidden;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      /* BACK is the DEFAULT visible side (no rotation) */
+      .card-back-el {
+        background: linear-gradient(135deg, var(--navy-mid), var(--navy-deep));
+        border: 2px solid var(--gold-dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+      }
+      .cbp {
+        width: 80%;
+        height: 80%;
+        border: 1px solid rgba(212, 160, 23, 0.25);
+        border-radius: 5px;
+        background: repeating-linear-gradient(
+          45deg,
+          transparent,
+          transparent 4px,
+          rgba(212, 160, 23, 0.05) 4px,
+          rgba(212, 160, 23, 0.05) 8px
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: rgba(212, 160, 23, 0.25);
+      }
+
+      /* FACE is the FLIPPED side (rotated 180 so hidden by default, shown when .flipped) */
+      .card-face {
+        background: var(--card-white);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 6px 20px rgba(0, 0, 0, 0.55),
+          0 0 0 1px rgba(0, 0, 0, 0.08);
+        gap: 3px;
+        transform: rotateY(180deg);
+      }
+      .card-face.red-card {
+        color: var(--card-red);
+      }
+      .card-face.black-card {
+        color: var(--card-black);
+      }
+      /* Rank and suit — sized to fit, never overflow */
+      .card-face .c-rank {
+        font-family: "Cinzel", serif;
+        font-weight: 900;
+        line-height: 1;
+        font-size: clamp(1rem, 18%, 2rem);
+        max-width: 100%;
+        text-align: center;
+      }
+      .card-face .c-suit {
+        line-height: 1;
+        font-size: clamp(1rem, 20%, 2.2rem);
+      }
+      .corner-rank {
+        font-family: "Cinzel", serif;
+        font-size: 0.6rem;
+        font-weight: 700;
+        position: absolute;
+        line-height: 1;
+      }
+      .corner-rank.tl {
+        top: 4px;
+        left: 5px;
+      }
+      .corner-rank.br {
+        bottom: 4px;
+        right: 5px;
+        transform: rotate(180deg);
+      }
+
+      /* 3D flip for NEXT card slot */
+      .next-scene {
+        perspective: 800px;
+        width: 62px;
+        height: 86px;
+        min-width: 62px;
+        min-height: 86px;
+        flex-shrink: 0;
+      }
+      .next-inner {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        transform-style: preserve-3d;
+        transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .next-inner.flipped {
+        transform: rotateY(180deg);
+      }
+      .next-face-front,
+      .next-face-back {
+        position: absolute;
+        inset: 0;
+        border-radius: 8px;
+        backface-visibility: hidden;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+      }
+      .next-face-front {
+        background: linear-gradient(135deg, var(--navy-mid), var(--navy-deep));
+        border: 1.5px solid var(--gold-dim);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        color: rgba(212, 160, 23, 0.35);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+      }
+      .next-face-back {
+        transform: rotateY(180deg);
+        background: var(--card-white);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+        gap: 2px;
+      }
+      .next-face-back.red {
+        color: var(--card-red);
+      }
+      .next-face-back.blk {
+        color: var(--card-black);
+      }
+      .next-face-back .c-rank {
+        font-family: "Cinzel", serif;
+        font-weight: 900;
+        line-height: 1;
+        font-size: clamp(0.8rem, 16%, 1.2rem);
+        max-width: 100%;
+        text-align: center;
+      }
+      .next-face-back .c-suit {
+        font-size: clamp(0.9rem, 18%, 1.3rem);
+        line-height: 1;
+      }
+
+      /* Flat small card for prev */
+      .flat-card {
+        border-radius: 8px;
+        background: var(--card-white);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.45);
+        gap: 2px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .flat-card.sm {
+        width: 54px;
+        height: 74px;
+        min-width: 54px;
+        min-height: 74px;
+      }
+      .flat-card .c-rank {
+        font-family: "Cinzel", serif;
+        font-weight: 900;
+        line-height: 1;
+        font-size: clamp(0.8rem, 16%, 1.2rem);
+        max-width: 100%;
+        text-align: center;
+      }
+      .flat-card .c-suit {
+        font-size: clamp(0.9rem, 18%, 1.3rem);
+        line-height: 1;
+      }
+      .flat-card.red {
+        color: var(--card-red);
+      }
+      .flat-card.blk {
+        color: var(--card-black);
+      }
+      .flat-card.dim {
+        opacity: 0.45;
+      }
+
+      .card-phase-text {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.5);
+        letter-spacing: 1px;
+        text-align: center;
+        min-height: 20px;
+      }
+
+      .bet-display {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 8px;
+      }
+      .bd-item {
+        text-align: center;
+      }
+      .bd-lbl {
+        font-size: 0.62rem;
+        color: rgba(255, 255, 255, 0.38);
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      .bd-val {
+        font-family: "Cinzel", serif;
+        font-size: 0.95rem;
+        color: var(--gold-light);
+        font-weight: 700;
+      }
+      .bd-val.g {
+        color: var(--green-light);
+      }
+
+      /* TIMER */
+      .timer-inline {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .timer-ring {
+        position: relative;
+        width: 46px;
+        height: 46px;
+      }
+      .timer-ring svg {
+        transform: rotate(-90deg);
+      }
+      .t-bg {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.08);
+        stroke-width: 4;
+      }
+      .t-arc {
+        fill: none;
+        stroke: var(--gold-light);
+        stroke-width: 4;
+        stroke-linecap: round;
+        stroke-dasharray: 113.1;
+        stroke-dashoffset: 0;
+        transition:
+          stroke-dashoffset 1s linear,
+          stroke 0.3s;
+      }
+      .t-num {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: "Cinzel", serif;
+        font-size: 0.9rem;
+        font-weight: 900;
+        color: var(--gold-light);
+      }
+      .t-num.urg {
+        color: var(--red-light);
+        animation: uPulse 0.5s ease-in-out infinite alternate;
+      }
+      .t-arc.urg {
+        stroke: var(--red-light);
+      }
+      @keyframes uPulse {
+        from {
+          opacity: 0.7;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      /* HI/LO BUTTONS */
+      .hilo-btns {
+        display: flex;
+        gap: 14px;
+        margin-bottom: 10px;
+      }
+      .hilo-btn {
+        flex: 1;
+        padding: 14px 10px;
+        border-radius: 14px;
+        border: 2px solid;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        gap: 4px;
+        font-family: "Cinzel", serif;
+        font-weight: 700;
+        transition: all 0.2s;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .hilo-btn .btn-arrow {
+        font-size: 1.8rem;
+        line-height: 1;
+      }
+      .hilo-btn .btn-lbl {
+        font-size: 0.82rem;
+        letter-spacing: 2px;
+      }
+      .hi-btn {
+        background: rgba(22, 163, 74, 0.15);
+        border-color: var(--green-light);
+        color: var(--green-light);
+      }
+      .hi-btn:not(:disabled):hover,
+      .hi-btn:not(:disabled):active {
+        background: rgba(22, 163, 74, 0.3);
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+        transform: translateY(-2px);
+      }
+      .lo-btn {
+        background: rgba(220, 38, 38, 0.15);
+        border-color: var(--red-light);
+        color: var(--red-light);
+      }
+      .lo-btn:not(:disabled):hover,
+      .lo-btn:not(:disabled):active {
+        background: rgba(220, 38, 38, 0.3);
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+        transform: translateY(-2px);
+      }
+      .hilo-btn:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      /* ROUND FLASH */
+      .round-flash {
+        display: none;
+        text-align: center;
+        padding: 8px 14px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        font-family: "Cinzel", serif;
+        font-size: 0.88rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        animation: flashIn 0.3s ease-out;
+      }
+      .round-flash.show {
+        display: block;
+      }
+      .round-flash.win {
+        background: rgba(34, 197, 94, 0.2);
+        color: var(--green-light);
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .round-flash.loss {
+        background: rgba(239, 68, 68, 0.2);
+        color: var(--red-light);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      @keyframes flashIn {
+        from {
+          opacity: 0;
+          transform: translateY(-6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* BET SECTION */
+      .bet-section {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(212, 160, 23, 0.18);
+        border-radius: 12px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .bet-title {
+        font-family: "Cinzel", serif;
+        font-size: 0.75rem;
+        color: var(--gold-light);
+        letter-spacing: 2px;
+        text-align: center;
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+      .chips-row {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+      .chip {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: "Cinzel", serif;
+        font-weight: 900;
+        font-size: 0.78rem;
+        border: 3px solid;
+        transition: all 0.2s;
+        user-select: none;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      }
+      .chip::after {
+        content: "";
+        position: absolute;
+        inset: 4px;
+        border-radius: 50%;
+        border: 1px dashed rgba(255, 255, 255, 0.3);
+      }
+      .chip-10 {
+        background: rgba(37, 99, 235, 0.4);
+        border-color: #3b82f6;
+        color: #93c5fd;
+      }
+      .chip-50 {
+        background: rgba(124, 58, 237, 0.4);
+        border-color: #a78bfa;
+        color: #c4b5fd;
+      }
+      .chip-100 {
+        background: rgba(220, 38, 38, 0.4);
+        border-color: #f87171;
+        color: #fca5a5;
+      }
+      .chip-500 {
+        background: rgba(212, 160, 23, 0.4);
+        border-color: var(--gold-light);
+        color: var(--gold-pale);
+      }
+      .chip:hover {
+        transform: translateY(-4px) scale(1.05);
+      }
+      .chip.sel {
+        transform: translateY(-6px) scale(1.1);
+      }
+      .chip-10.sel {
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.5);
+      }
+      .chip-50.sel {
+        box-shadow: 0 8px 20px rgba(167, 139, 250, 0.5);
+      }
+      .chip-100.sel {
+        box-shadow: 0 8px 20px rgba(248, 113, 113, 0.5);
+      }
+      .chip-500.sel {
+        box-shadow: 0 8px 20px rgba(240, 192, 64, 0.5);
+      }
+      .bet-info-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .bet-info-item {
+        text-align: center;
+        background: rgba(212, 160, 23, 0.07);
+        border-radius: 8px;
+        padding: 5px 12px;
+      }
+      .bi-lbl {
+        font-size: 0.6rem;
+        color: rgba(255, 255, 255, 0.38);
+        font-weight: 600;
+        letter-spacing: 1px;
+      }
+      .bi-val {
+        font-family: "Cinzel", serif;
+        font-size: 0.9rem;
+        color: var(--gold-light);
+        font-weight: 700;
+      }
+      .bi-val.g {
+        color: var(--green-light);
+      }
+      .deal-btn {
+        width: 100%;
+        padding: 13px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+        border: none;
+        border-radius: 10px;
+        font-family: "Cinzel", serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--midnight);
+        cursor: pointer;
+        letter-spacing: 2px;
+        transition: all 0.2s;
+        box-shadow: 0 4px 16px rgba(212, 160, 23, 0.35);
+      }
+      .deal-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        background: rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.4);
+        box-shadow: none;
+      }
+      .deal-btn:not(:disabled):hover {
+        background: linear-gradient(135deg, var(--gold-light), var(--gold));
+        box-shadow: 0 6px 24px rgba(240, 192, 64, 0.5);
+        transform: translateY(-1px);
+      }
+
+      /* RESULT OVERLAY */
+      .result-overlay {
+        display: none;
+        border-radius: 14px;
+        padding: 20px;
+        margin-bottom: 10px;
+        text-align: center;
+        border: 2px solid;
+        animation: rPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+      .result-overlay.show {
+        display: block;
+      }
+      .result-overlay.win-overlay {
+        background: rgba(22, 163, 74, 0.15);
+        border-color: var(--green-light);
+      }
+      .result-overlay.loss-overlay {
+        background: rgba(220, 38, 38, 0.15);
+        border-color: var(--red-light);
+      }
+      @keyframes rPop {
+        from {
+          opacity: 0;
+          transform: scale(0.85);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+      .result-emoji {
+        font-size: 2.8rem;
+        margin-bottom: 6px;
+      }
+      .result-title {
+        font-family: "Cinzel Decorative", cursive;
+        font-size: 1.4rem;
+        font-weight: 900;
+        margin-bottom: 4px;
+      }
+      .win-overlay .result-title {
+        color: var(--green-light);
+      }
+      .loss-overlay .result-title {
+        color: var(--red-light);
+      }
+      .result-sub {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.65);
+        margin-bottom: 12px;
+      }
+      .result-delta {
+        font-family: "Cinzel", serif;
+        font-size: 1.3rem;
+        font-weight: 900;
+        margin-bottom: 14px;
+      }
+      .win-overlay .result-delta {
+        color: var(--green-light);
+      }
+      .loss-overlay .result-delta {
+        color: var(--red-light);
+      }
+      .new-game-btn {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--gold), var(--gold-dim));
+        border: none;
+        border-radius: 10px;
+        font-family: "Cinzel", serif;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: var(--midnight);
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+      }
+      .new-game-btn:hover {
+        background: linear-gradient(135deg, var(--gold-light), var(--gold));
+        transform: translateY(-1px);
+      }
+
+      /* ADMIN PANEL */
+      .admin-panel {
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid rgba(212, 160, 23, 0.15);
+        border-radius: 10px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+      }
+      .admin-title {
+        font-family: "Cinzel", serif;
+        font-size: 0.68rem;
+        color: rgba(212, 160, 23, 0.6);
+        letter-spacing: 2px;
+        text-align: center;
+        margin-bottom: 8px;
+        font-weight: 700;
+      }
+      .admin-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .admin-cell {
+        background: rgba(7, 11, 24, 0.6);
+        border-radius: 6px;
+        padding: 6px 8px;
+      }
+      .ac-lbl {
+        font-size: 0.58rem;
+        color: rgba(255, 255, 255, 0.35);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .ac-val {
+        font-family: "Cinzel", serif;
+        font-size: 0.8rem;
+        color: var(--gold-light);
+        font-weight: 700;
+      }
+      .ac-val.g {
+        color: var(--green-light);
+      }
+      .ac-val.r {
+        color: var(--red-light);
+      }
+      .ac-val.s {
+        color: #c0c8d8;
+      }
+      .algo-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: rgba(7, 11, 24, 0.6);
+        border-radius: 6px;
+      }
+      .algo-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .algo-dot.safe {
+        background: var(--green-light);
+        box-shadow: 0 0 6px var(--green-light);
+      }
+      .algo-dot.forced {
+        background: var(--red-light);
+        box-shadow: 0 0 6px var(--red-light);
+        animation: urgD 0.5s ease-in-out infinite alternate;
+      }
+      @keyframes urgD {
+        from {
+          opacity: 0.5;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      .algo-text {
+        font-size: 0.72rem;
+        font-weight: 700;
+      }
+      .algo-text.safe {
+        color: var(--green-light);
+      }
+      .algo-text.forced {
+        color: var(--red-light);
+      }
+      .algo-sub {
+        font-size: 0.62rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin-left: auto;
+        font-style: italic;
+      }
+
+      /* FOOTER STATS */
+      .footer-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin-bottom: 8px;
+      }
+      .fs-item {
+        text-align: center;
+        background: rgba(212, 160, 23, 0.06);
+        border-radius: 7px;
+        padding: 6px 4px;
+      }
+      .fs-lbl {
+        font-size: 0.58rem;
+        color: rgba(255, 255, 255, 0.35);
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .fs-val {
+        font-family: "Cinzel", serif;
+        font-size: 0.8rem;
+        color: var(--gold-light);
+        font-weight: 700;
+      }
+      .reset-wrap {
+        text-align: center;
+        padding-bottom: 14px;
+      }
+      .reset-btn {
+        background: rgba(220, 38, 38, 0.1);
+        border: 1px solid rgba(220, 38, 38, 0.35);
+        color: rgba(220, 38, 38, 0.7);
+        border-radius: 8px;
+        padding: 7px 20px;
+        font-family: "Rajdhani", sans-serif;
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .reset-btn:hover {
+        background: rgba(220, 38, 38, 0.22);
+        color: var(--red-light);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-wrapper">
+      <!-- LOADING -->
+      <div id="loading-screen" class="screen active">
+        <div class="load-title">Hi · Lo</div>
+        <div class="load-tagline">Casino · 5 Round Match</div>
+        <div class="load-cards-row">
+          <div class="load-big-card red">
+            <div class="lc-rank">A</div>
+            <div class="lc-suit">♥</div>
+          </div>
+          <div class="load-big-card blk">
+            <div class="lc-rank">7</div>
+            <div class="lc-suit">♠</div>
+          </div>
+          <div class="load-big-card red">
+            <div class="lc-rank">K</div>
+            <div class="lc-suit">♦</div>
+          </div>
+        </div>
+        <div class="load-arrows">
+          <div class="load-arrow hi">▲ HI</div>
+          <div class="load-arrow lo">▼ LO</div>
+        </div>
+        <div class="load-bar-wrap"><div class="load-bar-fill"></div></div>
+        <div class="load-hint">PREDICT · BET · WIN</div>
+      </div>
+
+      <!-- GAME -->
+      <div id="game-screen" class="screen">
+        <div class="header">
+          <div class="h-title">Hi · Lo</div>
+          <div class="h-badge" id="phase-badge">BETTING</div>
+          <div class="h-bal">🪙 <span id="bal-disp">1000</span></div>
+        </div>
+
+        <div class="game-body">
+          <!-- 5-Round Progress -->
+          <div class="progress-track" id="prog-track">
+            <div class="prog-step" id="ps-0">
+              <div class="ps-num">R1</div>
+              <div class="ps-icon">—</div>
+            </div>
+            <div class="prog-step" id="ps-1">
+              <div class="ps-num">R2</div>
+              <div class="ps-icon">—</div>
+            </div>
+            <div class="prog-step" id="ps-2">
+              <div class="ps-num">R3</div>
+              <div class="ps-icon">—</div>
+            </div>
+            <div class="prog-step" id="ps-3">
+              <div class="ps-num">R4</div>
+              <div class="ps-icon">—</div>
+            </div>
+            <div class="prog-step" id="ps-4">
+              <div class="ps-num">R5</div>
+              <div class="ps-icon">—</div>
+            </div>
+          </div>
+
+          <!-- Round flash -->
+          <div class="round-flash" id="round-flash">Round Win!</div>
+
+          <!-- CARD STAGE -->
+          <div class="card-stage">
+            <div class="stage-top">
+              <div class="round-info" id="round-info">
+                Select a bet to begin
+              </div>
+              <div class="timer-inline" id="timer-wrap" style="display: none">
+                <div class="timer-ring">
+                  <svg width="46" height="46" viewBox="0 0 46 46">
+                    <circle class="t-bg" cx="23" cy="23" r="18" />
+                    <circle
+                      class="t-arc"
+                      id="timer-arc"
+                      cx="23"
+                      cy="23"
+                      r="18"
+                    />
+                  </svg>
+                  <div class="t-num" id="timer-num">15</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- CARD ROW: [prev] [arrow] [current (flip)] [arrow] [next (flip)] -->
+            <div class="card-row" id="card-row">
+              <!-- Prev card slot -->
+              <div class="card-slot" id="prev-slot" style="display: none">
+                <div class="card-slot-lbl prev">PREV</div>
+                <div id="prev-card-el"></div>
+              </div>
+
+              <!-- Left arrow prev→current -->
+              <div class="dir-arrow none" id="left-arrow" style="display: none">
+                →
+              </div>
+
+              <!-- Main current card (flip animation) -->
+              <div class="card-slot">
+                <div class="card-slot-lbl curr" id="curr-lbl">CARD</div>
+                <div class="card-scene lg" id="main-scene">
+                  <div class="card-inner" id="card-inner">
+                    <div class="card-face black-card" id="card-face">
+                      <div class="corner-rank tl" id="rank-tl">?</div>
+                      <div class="c-rank" id="c-rank">?</div>
+                      <div class="c-suit" id="c-suit">♠</div>
+                      <div class="corner-rank br" id="rank-br">?</div>
+                    </div>
+                    <div class="card-back-el"><div class="cbp">♠</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right arrow current→next -->
+              <div class="dir-arrow none" id="right-arrow">→</div>
+
+              <!-- Next card slot — 3D flip reveal -->
+              <div class="card-slot" id="next-slot" style="display: none">
+                <div class="card-slot-lbl next">NEXT</div>
+                <div id="next-card-el">
+                  <!-- populated by JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Phase text -->
+            <div class="card-phase-text" id="card-phase-text">
+              Place your bet and click Deal
+            </div>
+
+            <!-- Bet display (shown during play) -->
+            <div class="bet-display" id="bet-display" style="display: none">
+              <div class="bd-item">
+                <div class="bd-lbl">BET</div>
+                <div class="bd-val" id="bd-bet">0</div>
+              </div>
+              <div style="color: rgba(255, 255, 255, 0.15); font-size: 1.4rem">
+                |
+              </div>
+              <div class="bd-item">
+                <div class="bd-lbl">WIN IF 3+</div>
+                <div class="bd-val g" id="bd-pot">0</div>
+              </div>
+              <div style="color: rgba(255, 255, 255, 0.15); font-size: 1.4rem">
+                |
+              </div>
+              <div class="bd-item">
+                <div class="bd-lbl">ROUND</div>
+                <div class="bd-val" id="bd-rnd">0/5</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- HI/LO Buttons -->
+          <div class="hilo-btns">
+            <button
+              class="hilo-btn hi-btn"
+              id="hi-btn"
+              disabled
+              onclick="guess('hi')"
+            >
+              <div class="btn-arrow">▲</div>
+              <div class="btn-lbl">HIGHER</div>
+            </button>
+            <button
+              class="hilo-btn lo-btn"
+              id="lo-btn"
+              disabled
+              onclick="guess('lo')"
+            >
+              <div class="btn-arrow">▼</div>
+              <div class="btn-lbl">LOWER</div>
+            </button>
+          </div>
+
+          <!-- Match result -->
+          <div class="result-overlay" id="result-overlay">
+            <div class="result-emoji" id="result-emoji">🏆</div>
+            <div class="result-title" id="result-title">DOUBLE UP!</div>
+            <div class="result-sub" id="result-sub">You won 3+ rounds</div>
+            <div class="result-delta" id="result-delta">+500 🪙</div>
+            <button class="new-game-btn" onclick="newGame()">
+              ▶ NEW MATCH
+            </button>
+          </div>
+
+          <!-- Bet section -->
+          <div class="bet-section" id="bet-section">
+            <div class="bet-title">💰 SELECT BET — THEN DEAL</div>
+            <div class="chips-row">
+              <div class="chip chip-10" onclick="selectChip(10)">10</div>
+              <div class="chip chip-50" onclick="selectChip(50)">50</div>
+              <div class="chip chip-100" onclick="selectChip(100)">100</div>
+              <div class="chip chip-500" onclick="selectChip(500)">500</div>
+            </div>
+            <div class="bet-info-row">
+              <div class="bet-info-item">
+                <div class="bi-lbl">SELECTED BET</div>
+                <div class="bi-val" id="bet-amount-disp">0</div>
+              </div>
+              <div class="bet-info-item">
+                <div class="bi-lbl">POTENTIAL WIN</div>
+                <div class="bi-val g" id="pot-win-disp">0</div>
+              </div>
+            </div>
+            <button
+              class="deal-btn"
+              id="deal-btn"
+              disabled
+              onclick="startMatch()"
+            >
+              ♠ DEAL CARDS ♠
+            </button>
+          </div>
+
+          <!-- Admin Debug Panel -->
+          <div class="admin-panel">
+            <div class="admin-title">⚙ ADMIN DEBUG PANEL</div>
+            <div class="admin-grid">
+              <div class="admin-cell">
+                <div class="ac-lbl">TOTAL POOL</div>
+                <div class="ac-val s" id="ad-pool">0</div>
+              </div>
+              <div class="admin-cell">
+                <div class="ac-lbl">GIVEAWAY BAL</div>
+                <div class="ac-val g" id="ad-give">0</div>
+              </div>
+              <div class="admin-cell">
+                <div class="ac-lbl">HOUSE PROFIT</div>
+                <div class="ac-val" id="ad-profit">0</div>
+              </div>
+              <div class="admin-cell">
+                <div class="ac-lbl">DEV FEE</div>
+                <div class="ac-val" id="ad-dev">0</div>
+              </div>
+            </div>
+            <div class="algo-status">
+              <div class="algo-dot safe" id="algo-dot"></div>
+              <div class="algo-text safe" id="algo-text">
+                Algorithm: Safe Mode
+              </div>
+              <div class="algo-sub" id="algo-sub">Giveaway: sufficient</div>
+            </div>
+          </div>
+
+          <!-- Footer stats -->
+          <div class="footer-stats">
+            <div class="fs-item">
+              <div class="fs-lbl">MATCHES</div>
+              <div class="fs-val" id="fs-m">0</div>
+            </div>
+            <div class="fs-item">
+              <div class="fs-lbl">WON</div>
+              <div class="fs-val" id="fs-w">0</div>
+            </div>
+            <div class="fs-item">
+              <div class="fs-lbl">BALANCE</div>
+              <div class="fs-val" id="fs-b">0</div>
+            </div>
+            <div class="fs-item">
+              <div class="fs-lbl">H.PROFIT</div>
+              <div class="fs-val" id="fs-h">0</div>
+            </div>
+          </div>
+          <div class="reset-wrap">
+            <button class="reset-btn" onclick="resetAll()">
+              ⟳ RESET ALL DATA
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* ══════════════════════════════════════════
+         RESPONSIVE LAYOUT
+      ══════════════════════════════════════════ */
+      function applyLayout() {
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const gw = document.getElementById("game-wrapper");
+        if (!gw) return;
+        let W, H;
+        if (vw < vh) {
+          W = vw;
+          H = vh; // fill full viewport height in portrait
+        } else {
+          H = vh - 100;
+          W = Math.round(H / 2);
+        }
+        gw.style.width = W + "px";
+        gw.style.height = H + "px";
+
+        // Fix loading screen to fill wrapper exactly
+        const ls = document.getElementById("loading-screen");
+        if (ls) {
+          ls.style.height = H + "px";
+          ls.style.minHeight = H + "px";
+        }
+      }
+      applyLayout();
+      window.addEventListener("resize", applyLayout);
+
+      /* ══════════════════════════════════════════
+         CONSTANTS
+      ══════════════════════════════════════════ */
+      const RANKS = [
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "J",
+        "Q",
+        "K",
+        "A",
+      ];
+      const SUITS = ["♠", "♥", "♦", "♣"];
+      const RV = {
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        10: 10,
+        J: 11,
+        Q: 12,
+        K: 13,
+        A: 14,
+      };
+      const REDS = new Set(["♥", "♦"]);
+      const TIMER_CIRC = 113.1;
+      const TIMER_SECS = 15;
+      const PROFIT_THRESH = 200;
+
+      /* ══════════════════════════════════════════
+         PERSISTENCE
+      ══════════════════════════════════════════ */
+      let P = loadP();
+      function loadP() {
+        try {
+          const d = JSON.parse(localStorage.getItem("hilo5") || "{}");
+          return {
+            bal: d.bal ?? 1000,
+            matches: d.matches || 0,
+            won: d.won || 0,
+            totalPool: d.totalPool || 0,
+            giveaway: d.giveaway || 0,
+            hprofit: d.hprofit || 0,
+            devfee: d.devfee || 0,
+          };
+        } catch {
+          return {
+            bal: 1000,
+            matches: 0,
+            won: 0,
+            totalPool: 0,
+            giveaway: 0,
+            hprofit: 0,
+            devfee: 0,
+          };
+        }
+      }
+      function saveP() {
+        localStorage.setItem("hilo5", JSON.stringify(P));
+      }
+
+      /* ══════════════════════════════════════════
+         GAME STATE
+      ══════════════════════════════════════════ */
+      let G = freshGame();
+      function freshGame() {
+        return {
+          phase: "betting",
+          deck: [],
+          currentCard: null,
+          prevCard: null,
+          round: 0,
+          results: [],
+          bet: 0,
+          forcedLoss: false,
+        };
+      }
+      function buildDeck() {
+        const d = [];
+        for (const s of SUITS) for (const r of RANKS) d.push({ r, s });
+        return d;
+      }
+      function shuffle(a) {
+        const b = [...a];
+        for (let i = b.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [b[i], b[j]] = [b[j], b[i]];
+        }
+        return b;
+      }
+      const rv = (c) => RV[c.r];
+      const isRed = (c) => REDS.has(c.s);
+      const colCls = (c) => (isRed(c) ? "red-card" : "black-card");
+      const fcls = (c) => (isRed(c) ? "red" : "blk");
+
+      /* ══════════════════════════════════════════
+         BOOT
+      ══════════════════════════════════════════ */
+      window.addEventListener("load", () => {
+        updateAllUI();
+        setTimeout(() => {
+          document.getElementById("loading-screen").classList.remove("active");
+          document.getElementById("loading-screen").style.display = "none";
+          document.getElementById("game-screen").classList.add("active");
+          document.getElementById("game-screen").style.display = "block";
+          enterBettingPhase();
+        }, 3200);
+      });
+
+      /* ══════════════════════════════════════════
+         BETTING PHASE
+         — show card face-down, hide next slot
+      ══════════════════════════════════════════ */
+      function enterBettingPhase() {
+        G = freshGame();
+        resetProgressTracker();
+        hideResultOverlay();
+        document.getElementById("bet-section").style.display = "block";
+        document.getElementById("bet-display").style.display = "none";
+        clearTimer();
+        disableHiLo();
+
+        // Hide prev slot, left arrow, next slot, right arrow entirely in betting phase
+        document.getElementById("prev-slot").style.display = "none";
+        document.getElementById("left-arrow").style.display = "none";
+        document.getElementById("next-slot").style.display = "none";
+        document.getElementById("right-arrow").style.display = "none";
+
+        document.getElementById("round-info").textContent =
+          "Select a bet to begin";
+        setPhaseBadge("BETTING");
+        document.getElementById("round-flash").classList.remove("show");
+
+        // Main card: show BACK by default (no .flipped class = back is front in our CSS)
+        document.getElementById("curr-lbl").textContent = "CARD";
+        const inner = document.getElementById("card-inner");
+        inner.classList.remove("flipped"); // back visible = correct for betting phase
+        setPhaseText("Place your bet and click Deal");
+        updateAllUI();
+      }
+
+      let _selChip = 0;
+      function selectChip(val) {
+        _selChip = val;
+        document
+          .querySelectorAll(".chip")
+          .forEach((c) => c.classList.remove("sel"));
+        document.querySelector(".chip-" + val).classList.add("sel");
+        document.getElementById("bet-amount-disp").textContent = val;
+        document.getElementById("pot-win-disp").textContent = val * 2;
+        document.getElementById("deal-btn").disabled = P.bal < val;
+      }
+
+      /* ══════════════════════════════════════════
+         START MATCH
+         — shuffle deck, pop first card, flip it face-up
+         — show next slot as question-mark back
+      ══════════════════════════════════════════ */
+      function startMatch() {
+        if (_selChip <= 0 || P.bal < _selChip) return;
+        G.bet = _selChip;
+        // Full 52-card deck shuffled fresh
+        G.deck = shuffle(buildDeck());
+        G.round = 0;
+        G.results = [];
+        G.phase = "playing";
+
+        P.bal -= G.bet;
+        P.totalPool += G.bet;
+        P.giveaway = Math.floor(P.totalPool * 0.4);
+        P.hprofit = Math.floor(P.totalPool * 0.4);
+        P.devfee = Math.floor(P.totalPool * 0.2);
+        P.matches++;
+        saveP();
+        updateAllUI();
+
+        document.getElementById("bet-section").style.display = "none";
+        document.getElementById("bet-display").style.display = "flex";
+        document.getElementById("bd-bet").textContent = G.bet;
+        document.getElementById("bd-pot").textContent = G.bet * 2;
+        document.getElementById("bd-rnd").textContent = "0/5";
+        setPhaseBadge("PLAYING");
+
+        // Deal first card from the freshly shuffled deck (card 1 of 52)
+        G.currentCard = G.deck.pop();
+        G.prevCard = null;
+
+        document.getElementById("curr-lbl").textContent = "CURRENT";
+
+        // Show next slot and right arrow
+        document.getElementById("next-slot").style.display = "flex";
+        document.getElementById("right-arrow").style.display = "block";
+        document.getElementById("right-arrow").className = "dir-arrow none";
+        document.getElementById("right-arrow").textContent = "→";
+        renderNextSlotBack();
+
+        // Prepare card face content (hidden behind back until flip)
+        const inner = document.getElementById("card-inner");
+        const face = document.getElementById("card-face");
+        inner.classList.remove("flipped"); // ensure back is showing
+        face.className = "card-face " + colCls(G.currentCard);
+        document.getElementById("c-rank").textContent = G.currentCard.r;
+        document.getElementById("c-suit").textContent = G.currentCard.s;
+        document.getElementById("rank-tl").textContent = G.currentCard.r;
+        document.getElementById("rank-br").textContent = G.currentCard.r;
+
+        setPhaseText("Card dealt — predict: Higher or Lower?");
+
+        // Flip to reveal face (add flipped = face comes forward)
+        void inner.offsetWidth;
+        setTimeout(() => {
+          inner.classList.add("flipped");
+          setTimeout(() => startRound(), 650);
+        }, 100);
+      }
+
+      /* ══════════════════════════════════════════
+         ROUND
+      ══════════════════════════════════════════ */
+      function startRound() {
+        if (G.round >= 5) {
+          settleMatch();
+          return;
+        }
+        document.getElementById("bd-rnd").textContent = G.round + 1 + "/5";
+        updateProgressTracker();
+        document.getElementById("round-info").innerHTML =
+          `Round <span>${G.round + 1}</span> / 5`;
+        setPhaseText("Predict: will the next card be Higher or Lower?");
+
+        // Reset right arrow and next slot to question mark
+        document.getElementById("right-arrow").style.display = "block";
+        document.getElementById("right-arrow").className = "dir-arrow none";
+        document.getElementById("right-arrow").textContent = "→";
+        renderNextSlotBack();
+
+        enableHiLo();
+        startTimer();
+      }
+
+      /* ══════════════════════════════════════════
+         GUESS
+         — pick next card from remaining deck
+         — flip the next slot card face up
+      ══════════════════════════════════════════ */
+      function guess(dir) {
+        if (G.phase !== "playing") return;
+        clearTimer();
+        disableHiLo();
+
+        // Show direction arrow immediately
+        document.getElementById("right-arrow").className = "dir-arrow " + dir;
+        document.getElementById("right-arrow").textContent =
+          dir === "hi" ? "▲" : "▼";
+
+        G.forcedLoss = checkForcedLoss();
+        // Pick next card from remaining deck (no repeats — same card can't come twice)
+        const nextCard = pickNextCard(dir, G.forcedLoss);
+
+        // Flip the next slot to reveal the card
+        flipNextSlot(nextCard, () => {
+          // After flip completes, evaluate result
+          const curV = rv(G.currentCard),
+            nxtV = rv(nextCard);
+          const win =
+            (dir === "hi" && nxtV > curV) || (dir === "lo" && nxtV < curV);
+          G.results.push(win ? "w" : "l");
+          updateProgressTracker();
+
+          const rf = document.getElementById("round-flash");
+          if (win) {
+            rf.className = "round-flash win show";
+            rf.textContent = `✓  R${G.round + 1} WIN — ${nextCard.r}${nextCard.s} was ${dir === "hi" ? "higher" : "lower"}`;
+          } else {
+            const reason =
+              nxtV === curV
+                ? "Same value = Loss (house edge)"
+                : `Wrong — was ${dir === "hi" ? "lower/same" : "higher/same"}`;
+            rf.className = "round-flash loss show";
+            rf.textContent = `✗  R${G.round + 1} LOSS — ${reason}`;
+          }
+
+          G.round++;
+          // Shift: current → prev, next → current
+          G.prevCard = G.currentCard;
+          G.currentCard = nextCard;
+
+          setTimeout(() => {
+            document.getElementById("round-flash").classList.remove("show");
+
+            // Show prev card (dimmed small flat card)
+            showPrevCard(G.prevCard);
+            document.getElementById("left-arrow").style.display = "flex";
+            document.getElementById("left-arrow").className = "dir-arrow none";
+            document.getElementById("left-arrow").textContent = "→";
+
+            // Flip main card to new current
+            flipMainCard(G.currentCard);
+
+            // Reset next slot to question mark back for next round
+            setTimeout(() => {
+              renderNextSlotBack();
+              if (G.round >= 5) {
+                setTimeout(settleMatch, 400);
+              } else {
+                setTimeout(startRound, 400);
+              }
+            }, 600);
+          }, 1600);
+        });
+      }
+
+      /* ══════════════════════════════════════════
+         FLIP NEXT SLOT (3D reveal animation)
+      ══════════════════════════════════════════ */
+      function flipNextSlot(card, onComplete) {
+        const el = document.getElementById("next-card-el");
+        // Build the 3D flip structure — front=back-design, back=card face
+        const colorClass = fcls(card);
+        el.innerHTML = `
+          <div class="next-scene">
+            <div class="next-inner" id="next-inner-flip">
+              <div class="next-face-front">?</div>
+              <div class="next-face-back ${colorClass}">
+                <div class="c-rank">${card.r}</div>
+                <div class="c-suit">${card.s}</div>
+              </div>
+            </div>
+          </div>`;
+        // Trigger flip after short delay
+        const ni = document.getElementById("next-inner-flip");
+        void ni.offsetWidth;
+        setTimeout(() => {
+          ni.classList.add("flipped");
+          // Call onComplete after flip animation duration
+          setTimeout(() => {
+            if (onComplete) onComplete();
+          }, 600);
+        }, 80);
+      }
+
+      /* ══════════════════════════════════════════
+         PROFIT SHIELD
+      ══════════════════════════════════════════ */
+      function checkForcedLoss() {
+        const payout = G.bet * 2;
+        const condA = payout > P.giveaway;
+        const condB = P.hprofit < PROFIT_THRESH;
+        const forced = condA || condB;
+        const dot = document.getElementById("algo-dot");
+        const txt = document.getElementById("algo-text");
+        const sub = document.getElementById("algo-sub");
+        if (forced) {
+          dot.className = "algo-dot forced";
+          txt.className = "algo-text forced";
+          txt.textContent = "Algorithm: Forced Loss Mode";
+          sub.textContent = condA
+            ? "Payout > Giveaway"
+            : "Profit below threshold";
+        } else {
+          dot.className = "algo-dot safe";
+          txt.className = "algo-text safe";
+          txt.textContent = "Algorithm: Safe Mode";
+          sub.textContent = "Giveaway: sufficient";
+        }
+        return forced;
+      }
+
+      /* ══════════════════════════════════════════
+         PICK NEXT CARD
+         — always removes chosen card from deck so no repeats
+         — deck shrinks: round 1 picks from 51, round 2 from 50, etc.
+      ══════════════════════════════════════════ */
+      function pickNextCard(dir, forceUserLoss) {
+        const cur = rv(G.currentCard);
+        let pool;
+        if (forceUserLoss) {
+          pool =
+            dir === "hi"
+              ? G.deck.filter((c) => rv(c) <= cur) // user guessed hi → give ≤ (lose)
+              : G.deck.filter((c) => rv(c) >= cur); // user guessed lo → give ≥ (lose)
+          if (!pool.length) pool = [...G.deck];
+        } else {
+          pool =
+            dir === "hi"
+              ? G.deck.filter((c) => rv(c) > cur)
+              : G.deck.filter((c) => rv(c) < cur);
+          if (!pool.length) pool = [...G.deck];
+        }
+        const chosen = pool[Math.floor(Math.random() * pool.length)];
+        // Remove from deck — no repeats
+        const idx = G.deck.findIndex(
+          (c) => c.r === chosen.r && c.s === chosen.s,
+        );
+        if (idx >= 0) G.deck.splice(idx, 1);
+        return chosen;
+      }
+
+      /* ══════════════════════════════════════════
+         SETTLEMENT
+      ══════════════════════════════════════════ */
+      function settleMatch() {
+        G.phase = "settling";
+        clearTimer();
+        disableHiLo();
+        setPhaseBadge("RESULT");
+        const wins = G.results.filter((r) => r === "w").length;
+        const losses = G.results.filter((r) => r === "l").length;
+        const userWon = wins >= 3;
+        const ov = document.getElementById("result-overlay");
+        if (userWon) {
+          P.bal += G.bet * 2;
+          P.won++;
+          P.giveaway = Math.max(0, P.giveaway - G.bet * 2);
+          ov.className = "result-overlay win-overlay show";
+          document.getElementById("result-emoji").textContent = "🏆";
+          document.getElementById("result-title").textContent = "DOUBLE UP!";
+          document.getElementById("result-sub").textContent =
+            `${wins} wins — ${losses} losses`;
+          document.getElementById("result-delta").textContent =
+            `+${G.bet * 2} 🪙`;
+          setPhaseText(`Match won! ${wins}/5 rounds correct.`);
+        } else {
+          ov.className = "result-overlay loss-overlay show";
+          document.getElementById("result-emoji").textContent = "💀";
+          document.getElementById("result-title").textContent = "BUST!";
+          document.getElementById("result-sub").textContent =
+            `${wins} wins — ${losses} losses`;
+          document.getElementById("result-delta").textContent = `-${G.bet} 🪙`;
+          setPhaseText(`Match lost. Only ${wins}/5 rounds correct.`);
+        }
+        saveP();
+        updateAllUI();
+        ov.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      /* ══════════════════════════════════════════
+         TIMER
+      ══════════════════════════════════════════ */
+      let _timerInt = null,
+        _timerSec = TIMER_SECS;
+      function startTimer() {
+        clearTimer();
+        _timerSec = TIMER_SECS;
+        const wrap = document.getElementById("timer-wrap");
+        const arc = document.getElementById("timer-arc");
+        const num = document.getElementById("timer-num");
+        wrap.style.display = "flex";
+        arc.className = "t-arc";
+        arc.style.strokeDashoffset = "0";
+        num.className = "t-num";
+        num.textContent = TIMER_SECS;
+        _timerInt = setInterval(() => {
+          _timerSec--;
+          arc.style.strokeDashoffset =
+            TIMER_CIRC * (1 - _timerSec / TIMER_SECS);
+          num.textContent = _timerSec;
+          const urg = _timerSec <= 5;
+          num.className = "t-num" + (urg ? " urg" : "");
+          arc.className = "t-arc" + (urg ? " urg" : "");
+          if (_timerSec <= 0) {
+            clearTimer();
+            timeUp();
+          }
+        }, 1000);
+      }
+      function clearTimer() {
+        if (_timerInt) {
+          clearInterval(_timerInt);
+          _timerInt = null;
+        }
+        const w = document.getElementById("timer-wrap");
+        if (w) w.style.display = "none";
+      }
+      function timeUp() {
+        const dir = Math.random() < 0.5 ? "hi" : "lo";
+        setPhaseText(`⏰ Time up! Auto-guessing ${dir.toUpperCase()}...`);
+        setTimeout(() => guess(dir), 300);
+      }
+
+      /* ══════════════════════════════════════════
+         RENDER HELPERS
+      ══════════════════════════════════════════ */
+      function flipMainCard(card) {
+        const inner = document.getElementById("card-inner");
+        const face = document.getElementById("card-face");
+        // Step 1: flip back to back
+        inner.classList.remove("flipped");
+        // Step 2: update face content
+        face.className = "card-face " + colCls(card);
+        document.getElementById("c-rank").textContent = card.r;
+        document.getElementById("c-suit").textContent = card.s;
+        document.getElementById("rank-tl").textContent = card.r;
+        document.getElementById("rank-br").textContent = card.r;
+        // Step 3: flip to face
+        void inner.offsetWidth;
+        setTimeout(() => {
+          inner.classList.add("flipped");
+        }, 80);
+      }
+
+      function showPrevCard(card) {
+        const slot = document.getElementById("prev-slot");
+        const el = document.getElementById("prev-card-el");
+        if (!card) {
+          slot.style.display = "none";
+          return;
+        }
+        slot.style.display = "flex";
+        el.innerHTML = `<div class="flat-card sm dim ${fcls(card)}">
+          <div class="c-rank">${card.r}</div>
+          <div class="c-suit">${card.s}</div>
+        </div>`;
+      }
+
+      // Next slot: show question mark card back
+      function renderNextSlotBack() {
+        document.getElementById("next-card-el").innerHTML =
+          `<div class="next-scene">
+            <div class="next-inner">
+              <div class="next-face-front">?</div>
+              <div class="next-face-back"></div>
+            </div>
+          </div>`;
+      }
+
+      // Progress tracker
+      function resetProgressTracker() {
+        for (let i = 0; i < 5; i++) {
+          const el = document.getElementById(`ps-${i}`);
+          el.className = "prog-step";
+          el.innerHTML = `<div class="ps-num">R${i + 1}</div><div class="ps-icon">—</div>`;
+        }
+      }
+      function updateProgressTracker() {
+        for (let i = 0; i < 5; i++) {
+          const el = document.getElementById(`ps-${i}`);
+          if (i < G.results.length) {
+            const res = G.results[i];
+            el.className = `prog-step ${res === "w" ? "win" : "loss"}`;
+            el.innerHTML = `<div class="ps-num">R${i + 1}</div><div class="ps-icon">${res === "w" ? "W" : "L"}</div>`;
+          } else if (i === G.round && G.phase === "playing") {
+            el.className = "prog-step current";
+            el.innerHTML = `<div class="ps-num">R${i + 1}</div><div class="ps-icon">▶</div>`;
+          } else {
+            el.className = "prog-step";
+            el.innerHTML = `<div class="ps-num">R${i + 1}</div><div class="ps-icon">—</div>`;
+          }
+        }
+      }
+
+      function enableHiLo() {
+        document.getElementById("hi-btn").disabled = false;
+        document.getElementById("lo-btn").disabled = false;
+      }
+      function disableHiLo() {
+        document.getElementById("hi-btn").disabled = true;
+        document.getElementById("lo-btn").disabled = true;
+      }
+      function setPhaseText(t) {
+        document.getElementById("card-phase-text").textContent = t;
+      }
+      function setPhaseBadge(t) {
+        document.getElementById("phase-badge").textContent = t;
+      }
+      function hideResultOverlay() {
+        document.getElementById("result-overlay").className = "result-overlay";
+      }
+
+      /* ══════════════════════════════════════════
+         UPDATE ALL UI
+      ══════════════════════════════════════════ */
+      function updateAllUI() {
+        document.getElementById("bal-disp").textContent =
+          P.bal.toLocaleString();
+        document.getElementById("fs-m").textContent = P.matches;
+        document.getElementById("fs-w").textContent = P.won;
+        document.getElementById("fs-b").textContent = P.bal.toLocaleString();
+        document.getElementById("fs-h").textContent =
+          P.hprofit.toLocaleString();
+        document.getElementById("ad-pool").textContent =
+          P.totalPool.toLocaleString();
+        document.getElementById("ad-give").textContent =
+          P.giveaway.toLocaleString();
+        document.getElementById("ad-profit").textContent =
+          P.hprofit.toLocaleString();
+        document.getElementById("ad-dev").textContent =
+          P.devfee.toLocaleString();
+      }
+
+      /* ══════════════════════════════════════════
+         NEW GAME / RESET
+      ══════════════════════════════════════════ */
+      function newGame() {
+        _selChip = 0;
+        document
+          .querySelectorAll(".chip")
+          .forEach((c) => c.classList.remove("sel"));
+        document.getElementById("bet-amount-disp").textContent = "0";
+        document.getElementById("pot-win-disp").textContent = "0";
+        document.getElementById("deal-btn").disabled = true;
+        enterBettingPhase();
+      }
+
+      function resetAll() {
+        if (!confirm("Reset all data and restart?")) return;
+        clearTimer();
+        localStorage.clear();
+        P = {
+          bal: 1000,
+          matches: 0,
+          won: 0,
+          totalPool: 0,
+          giveaway: 0,
+          hprofit: 0,
+          devfee: 0,
+        };
+        saveP();
+        _selChip = 0;
+        const ls = document.getElementById("loading-screen");
+        const gs = document.getElementById("game-screen");
+        gs.style.display = "none";
+        gs.classList.remove("active");
+        ls.style.display = "flex";
+        ls.classList.add("active");
+        ls.querySelector(".load-bar-wrap").innerHTML =
+          '<div class="load-bar-fill"></div>';
+        setTimeout(() => {
+          ls.style.display = "none";
+          ls.classList.remove("active");
+          gs.style.display = "block";
+          gs.classList.add("active");
+          updateAllUI();
+          enterBettingPhase();
+        }, 3000);
+      }
+
+      // Inject card drop animation keyframe
+      const st = document.createElement("style");
+      st.textContent = `@keyframes cdrop{from{opacity:0;transform:scale(.6) translateY(-8px)}to{opacity:1;transform:scale(1) translateY(0)}}`;
+      document.head.appendChild(st);
+    </script>
+  </body>
+</html>
